@@ -2,30 +2,31 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 
+#include "src/state.h"
 #include "src/const.h"
 #include "src/html.h"
 #include "src/helper.h"
 
-
 ESP8266WebServer server(80);
-bool isLedEnabled = false;
-bool isDoorOpened = false;
 
 void renderHtml();
 void redirectToRoot();
 void handleApi();
 
+DoorState getDoorState();
 
 void setup()
 {
-    pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(D1, OUTPUT);
-
-    digitalWrite(LED_BUILTIN, helper::getDigitalValue(isLedEnabled));
-    digitalWrite(D1, helper::getDigitalValue(isDoorOpened));
-
     Serial.begin(115200);
     Serial.println();
+
+    pinMode(DOOR_CONTROL, OUTPUT);
+    pinMode(SENSOR_OPENED, INPUT_PULLUP);
+    pinMode(SENSOR_CLOSED, INPUT_PULLUP);
+    pinMode(SENSOR_ENABLE, OUTPUT);
+
+    digitalWrite(DOOR_CONTROL, OFF);
+    digitalWrite(SENSOR_ENABLE, OFF);
 
     Serial.print("Setting soft-AP ... ");
     boolean result = WiFi.softAP(SSID, PW);
@@ -67,18 +68,15 @@ void renderHtml()
     String content;
     content.reserve(1024);
 
-    String btnName = helper::getString(!isLedEnabled);
-    btnName.toUpperCase();
+    DoorState state = getDoorState();
 
-    String doorBtnName = helper::getString(!isDoorOpened);
-    doorBtnName.toUpperCase();
+    String btnName = helper::getBtnActionString(state);
+    btnName.toUpperCase();
 
     content = html::begin_html() +
               html::h1("Remote Control") +
-              html::p("LED: " + helper::getString(isLedEnabled)) +
-              html::button_post(btnName, "led", helper::getString(!isLedEnabled), "/api") +
-              html::p("Door: " + helper::getString(isDoorOpened)) +
-              html::button_post(doorBtnName, "door", helper::getString(!isDoorOpened), "/api") +
+              html::p("Door: " + helper::getStateString(state)) +
+              html::button_post(btnName, "door", helper::getBtnActionString(state), "/api") +
               html::end_html();
 
     server.send(200, "text/html", content);
@@ -86,21 +84,38 @@ void renderHtml()
 
 void redirectToRoot()
 {
-    server.sendHeader("Location","/");
+    server.sendHeader("Location", "/");
     server.send(303);
 }
 
 void handleApi()
 {
-    if(server.hasArg("led"))
+    if (server.hasArg("door"))
     {
-        isLedEnabled = helper::getBool(server.arg("led"));
-        digitalWrite(LED_BUILTIN, helper::getDigitalValue(isLedEnabled));
-    }
-    else if (server.hasArg("door"))
-    {
-        isDoorOpened = helper::getBool(server.arg("door"));
-        digitalWrite(D1, helper::getDigitalValue(isDoorOpened));
+        digitalWrite(DOOR_CONTROL, ON);
+        delay(100);
+        digitalWrite(DOOR_CONTROL, OFF);
     }
     redirectToRoot();
+}
+
+DoorState getDoorState()
+{
+    digitalWrite(SENSOR_ENABLE, ON);
+    bool isOpenSensorTriggered = helper::getBool(digitalRead(SENSOR_OPENED));
+    bool isClosedSensorTriggered = helper::getBool(digitalRead(SENSOR_CLOSED));
+    digitalWrite(SENSOR_ENABLE, OFF);
+
+    if (isOpenSensorTriggered && !isClosedSensorTriggered)
+    {
+        return DoorState::Opened;
+    }
+    else if (!isOpenSensorTriggered && isClosedSensorTriggered)
+    {
+        return DoorState::Closed;
+    }
+    else
+    {
+        return DoorState::Undefined;
+    }
 }

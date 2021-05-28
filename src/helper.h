@@ -1,21 +1,41 @@
 #ifndef HEADER_HELPER
 #define HEADER_HELPER
 
+#include "state.h"
+
 namespace helper
 {
-    const static String getString(bool value)
+    const static String getBtnActionString(const DoorState& value)
     {
-        return value ? "on" : "off";
+        switch (value)
+        {
+        case DoorState::Closed:
+            return btnAction::Open;
+        case DoorState::Opened:
+            return btnAction::Close;
+
+        default:
+            return btnAction::Stop;
+        }
     };
 
-    const static bool getBool(String value)
+    const static String getStateString(const DoorState& value)
     {
-        return value == "on" ? true : false;
+        switch (value)
+        {
+        case DoorState::Closed:
+            return "Closed";
+        case DoorState::Opened:
+            return "Opened";
+
+        default:
+            return "Moving...";
+        }
     };
 
-    const static uint8_t getDigitalValue(bool value)
+    const static bool getBool(int value)
     {
-        return value ? LOW : HIGH;
+        return value == ON ? true : false;
     };
 };
 #endif
