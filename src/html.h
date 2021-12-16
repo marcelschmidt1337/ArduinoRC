@@ -3,7 +3,8 @@
 
 #include <WString.h>
 
-class html {
+class html 
+{
     public:
     static String begin_html();
     static String end_html();
@@ -11,6 +12,5 @@ class html {
     static String p(String str);
     static String button_get(String name, String link);
     static String button_post(String buttonName, String key, String value, String requestUri);
-    static String redirect(String uri);
 };
 #endif

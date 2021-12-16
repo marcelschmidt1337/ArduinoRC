@@ -34,7 +34,7 @@ void setup()
     desiredState = initialState;
     doorAction.setAction(initialState);
 
-    Serial.print("Setting soft-AP ... ");
+    Serial.println("Setting soft-AP ... ");
     bool result = WiFi.softAP(SSID, PW);
     if (result == true)
     {
@@ -115,28 +115,7 @@ void handleApi()
         digitalWrite(DOOR_CONTROL, OFF);
 
         doorAction.updateAction();
-        desiredState = helper::getStateFromBtnAction(server.arg("door"));
+        desiredState = doorAction.getDesiredSensorState();
     }
     redirectToRoot();
-}
-
-SensorState getDoorState()
-{
-    digitalWrite(SENSOR_ENABLE, ON);
-    bool isOpenSensorTriggered = helper::getBool(digitalRead(SENSOR_OPENED));
-    bool isClosedSensorTriggered = helper::getBool(digitalRead(SENSOR_CLOSED));
-    digitalWrite(SENSOR_ENABLE, OFF);
-
-    if (isOpenSensorTriggered && !isClosedSensorTriggered)
-    {
-        return SensorState::Opened;
-    }
-    else if (!isOpenSensorTriggered && isClosedSensorTriggered)
-    {
-        return SensorState::Closed;
-    }
-    else
-    {
-        return SensorState::Undefined;
-    }
 }

@@ -13,11 +13,7 @@ static const String DNS  = "garage";
 static const String SSID = "ESPsoftAP_01";
 static const String PW   = "pass-to-soft-AP";
 
-namespace btnAction
-{
-    const static String Open  = "open";
-    const static String Close = "close";
-    const static String Stop  = "stop";
-};
+static const int REFRESH_SECONDS = 1;
+static const unsigned long DOOR_TIMEOUT = 15;
 
 #endif

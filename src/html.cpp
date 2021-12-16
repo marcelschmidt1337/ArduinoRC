@@ -40,7 +40,3 @@ String html::button_post(String buttonName, String key, String value, String req
            "</form>\n");
     return str;
 };
-String html::redirect(String uri)
-{
-    return "<meta http-equiv=\"Refresh\" content=\"0; url='" + uri + "'\" />";
-};
